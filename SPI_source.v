@@ -70,7 +70,8 @@ module SPI_state_machine(
 				begin 
 					SCK_counter <= 0;
 				end 
-		end                                                             
+		end 
+	assign SCK = (SCK_counter <= 87) ? 0:1;      // 50% duty cycle PWM/SPI clock 
 		
 		
 	// State machine	
@@ -235,8 +236,7 @@ module SPI_state_machine(
 	
 	assign CS = r_CS;                  // output signals
 	assign MOSI = r_MOSI;
-	assign o_DATA = r_DATA;
-	assign SCK = (SCK_counter <= 87) ? 0:1;      // 50% duty cycle PWM/SPI clock   
+	assign o_DATA = r_DATA;  
 	assign DATA_VALID = r_DV; 
 		
 endmodule 		
