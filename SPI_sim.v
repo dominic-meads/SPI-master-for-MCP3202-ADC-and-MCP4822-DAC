@@ -74,7 +74,7 @@ module tb;
       #1408
       MISO=1;    // 0 
       #1408
-      MISO=1'bz;
+	    MISO=1'bz; // high impedance (models actual chip)
 	  #5000
       $finish;
     end
