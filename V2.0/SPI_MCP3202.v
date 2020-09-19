@@ -77,12 +77,13 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 					SCK_counter <= 0;
 				end 
 		end                                                             	
-	assign SCK = (SCK_counter <= 69) ? 0:1;      // 50% duty cycle PWM/SPI clock   
+	assign SCK = (SCK_counter <= 69) ? 1:0;      // 50% duty cycle PWM/SPI clock   
 		
 	// State machine	
 	always @ (posedge clk)
 		begin 
 			case (r_STATE)
+				
 				
 				INITIALIZE:                //this just makes the whole process wait a bit (more for simulation purposes due to clk initialization)
 					begin 
@@ -93,14 +94,12 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 							if (sample_counter == 2499)    // makes INITIALIZE wait a whole sampling period for set up 
 								begin 
 									r_STATE <= DISABLE;
-									r_DV <= 1;
 								end
 							else 
 								begin 
 									r_STATE <= INITIALIZE;
 								end
-					end   // end INITIALIZE
-					
+					end   // end INITIALIZE	
 				
 				
 				DISABLE:              
@@ -109,11 +108,10 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 						r_SCK_enable <= 0;
 						r_MOSI <= 0;
 						r_DV <= 0;
-							if (sample_counter == 55)     // ensures that DISABLE waits 56 counts or 448ns (tcsh must > 100ns in datasheet)
+							if (sample_counter == 63)     // ensures that DISABLE waits 64 counts or 512ns (tcsh must >= 500ns in datasheet)
 								begin 
 									r_STATE <= TRANSMITTING;
 									r_CS <= 0;                       // CS pulled low, activates sampling
-						            r_SCK_enable <= 1;
 						            r_MOSI <= START;
 								end
 							else
@@ -121,35 +119,31 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 									r_STATE <= DISABLE;
 								end
 					end     // end DISABLE 
-
-
-
-
-// TODO --------------------------------------------------------------------------------------------------------------------------------
-
-
-					
 					
 					
 				TRANSMITTING:
 					begin 
 						r_CS <= 0;                       // CS pulled low, activates sampling
-						r_SCK_enable <= 1;
+						r_SCK_enable <= 0;
 						r_MOSI <= START;
 						r_DV <= 0;
-							if (sample_counter == 300)
+							if (sample_counter == 120)     
+								begin 
+									r_SCK_enable <= 1;   // pull SCK high after 56 counts @ 8ns (448ns, check tsucs in datasheet, tsucs >= 100ns)
+								end 
+							if (sample_counter >= 190 && sample_counter < 330)
 								begin 
 									r_MOSI <= SGL;        // provides set up data to ADC depending on the timing
 								end
-							else if (sample_counter >= 476 && sample_counter < 652)
+							else if (sample_counter >= 330 && sample_counter < 470)
 								begin 
 									r_MOSI <= ODD;
 								end
-							else if (sample_counter >= 652 && sample_counter < 828)
+							else if (sample_counter >= 470 && sample_counter < 610)
 								begin 
 									r_MOSI <= MSBF;
 								end
-							else if (sample_counter == 828 && r_MOSI == MSBF)
+							else if (sample_counter == 610 && r_MOSI == MSBF)
 								begin 
 									r_STATE <= RECEIVING;
 								end
@@ -164,68 +158,72 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 					begin 
 						r_CS <= 0;                       
 						r_SCK_enable <= 1;
-						r_MOSI <= 1; 						// MOSI is "don't care" in this state
-							if (sample_counter == 1092)     // waits 1.5 SCK cycle after MSBF bit because MISO transmitts null bit (MUST SAMPLE AT MIDPOINT OF BIT)
+						r_MOSI <= 0; 						// MOSI is "don't care" in this state
+							if (sample_counter == 785)      // waits 1.5 SCK cycle after MSBF bit because MISO transmitts null bit (MUST SAMPLE AT MIDPOINT OF BIT)
 								begin 
 									r_DATA[11] <= MISO;
 									r_DV <= 0;
 								end
-							if (sample_counter == 1268)
+							if (sample_counter == 925)
 								begin 
 									r_DATA[10] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 1444)
+							if (sample_counter == 1065)
 								begin 
 									r_DATA[9] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 1620)
+							if (sample_counter == 1205)
 								begin 
 									r_DATA[8] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 1796)
+							if (sample_counter == 1345)
 								begin 
 									r_DATA[7] <= MISO;									
 									r_DV <= 0;
 								end 
-							if (sample_counter == 1972)
+							if (sample_counter == 1485)
 								begin 
 									r_DATA[6] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 2148)
+							if (sample_counter == 1625)
 								begin 
 									r_DATA[5] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 2326)
+							if (sample_counter == 1765)
 								begin 
 									r_DATA[4] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 2500)
+							if (sample_counter == 1905)
 								begin 
 									r_DATA[3] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 2676)
+							if (sample_counter == 2045)
 								begin 
 									r_DATA[2] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 2852)
+							if (sample_counter == 2185)
 								begin 
 									r_DATA[1] <= MISO;
 									r_DV <= 0;
 								end 
-							if (sample_counter == 3028)
+							if (sample_counter == 2325)
 								begin 
 									r_DATA[0] <= MISO;
-									r_DV <= 1;                     // Data is now valid
+									r_DV <= 0;                     
 								end 
-							if (sample_counter == 3116)
+							if (sample_counter == 2345)
+								begin 
+									r_DV <= 1;                     // Data is now valid
+								end 	
+							if (sample_counter == 0)               // After counter flips over, the sample is over, and it is time for another one
 								begin 
 									r_STATE <= DISABLE;
 								end 
@@ -252,4 +250,5 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	assign o_DATA = r_DATA;
 	assign DATA_VALID = r_DV; 
 		
-endmodule 
+endmodule 		
+			
