@@ -15,10 +15,10 @@
 
 `timescale 1ns / 1ns
 
-module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet) 
+module SPI_MCP3202 #(parameter // set up bits for MOSI (DIN on datasheet) 
 	START = 1,      // start bit
 	SGL = 1,        // sets ADC to single ended mode
-	ODD = 0,        // sets sample input to channel 1
+	ODD = 0,        // sets sample input to channel 0
 	MSBF = 1        // sets ADC to transmit MSB first
 	)(
 	input clk,                 // 125  MHz 
@@ -35,6 +35,8 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	localparam DISABLE = 1;         // CS is high
 	localparam TRANSMITTING = 2;    // set the sample channel, sampling mode, etc...
 	localparam RECEIVING = 3;       // convert the bitstream into parellel word
+	
+	integer i = 0;                  // for the for loop in the TRANSMITTING state (used to condense code)
 	
 	reg [7:0] SCK_counter = 0;       // for the output SPI clock
 	reg r_MOSI = 0; 
@@ -63,8 +65,8 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	// SPI_CLK
 	always @ (posedge clk)
 		begin 
-			if (r_SCK_enable == 1 && SCK_counter <= 138)              /* 140 counts (0-139) @ 8ns system clock period 
-													                     is 893 KHz, < SCK max frequency of 0.9 MHz (datasheet) */
+			if (r_SCK_enable && SCK_counter <= 138)              /* 140 counts (0-139) @ 8ns system clock period 
+													                is 893 KHz, < SCK max frequency of 0.9 MHz (datasheet) */
 				begin 
 					SCK_counter <= SCK_counter + 1;
 				end 
@@ -73,7 +75,7 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 					SCK_counter <= 0;
 				end 
 		end                                                             	
-	assign SCK = (SCK_counter <= 69) ? 0:1;      // 50% duty cycle PWM/SPI clock   
+	assign SCK = (SCK_counter <= 69 && r_SCK_enable) ? 1:0;      // 50% duty cycle PWM/SPI clock   
 		
 	// State machine	
 	always @ (posedge clk)
@@ -154,67 +156,13 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 					begin 
 						r_CS <= 0;                       
 						r_SCK_enable <= 1;
-						r_MOSI <= 0; 						// MOSI is "don't care" in this state
-							if (sample_counter == 785)      // waits 1.5 SCK cycle after MSBF bit because MISO transmitts null bit (MUST SAMPLE AT MIDPOINT OF BIT)
+						r_MOSI <= 0; 						// MOSI is "don't care" in this state  
+							for(i = 0; i < 12; i = i + 1)
 								begin 
-									r_DATA[11] <= MISO;
-									r_DV <= 0;
+									if (sample_counter == 785 + 140*i)  /* the 785 makes sure waits 1.5 SCK cycle after MSBF bit 
+									                                       because MISO transmitts null bit (MUST SAMPLE AT MIDPOINT OF BIT) */
+										r_DATA[11-i] <= MISO;
 								end
-							if (sample_counter == 925)
-								begin 
-									r_DATA[10] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1065)
-								begin 
-									r_DATA[9] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1205)
-								begin 
-									r_DATA[8] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1345)
-								begin 
-									r_DATA[7] <= MISO;									
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1485)
-								begin 
-									r_DATA[6] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1625)
-								begin 
-									r_DATA[5] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1765)
-								begin 
-									r_DATA[4] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 1905)
-								begin 
-									r_DATA[3] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 2045)
-								begin 
-									r_DATA[2] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 2185)
-								begin 
-									r_DATA[1] <= MISO;
-									r_DV <= 0;
-								end 
-							if (sample_counter == 2325)
-								begin 
-									r_DATA[0] <= MISO;
-									r_DV <= 0;                     
-								end 
 							if (sample_counter == 2345)
 								begin 
 									r_DV <= 1;                     // Data is now valid
@@ -247,5 +195,6 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	assign DATA_VALID = r_DV; 
 		
 endmodule 		
+				
 				
 			
