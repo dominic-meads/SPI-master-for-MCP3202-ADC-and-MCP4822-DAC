@@ -63,21 +63,17 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	// SPI_CLK
 	always @ (posedge clk)
 		begin 
-			if (r_SCK_enable == 1 && r_STATE !== INITIALIZE && SCK_counter <= 138)  /* 140 counts (0-139) @ 8ns system clock period 
-																					   is 893 KHz, < SCK max frequency of 0.9 MHz (datasheet) */
+			if (r_SCK_enable == 1 && SCK_counter <= 138)              /* 140 counts (0-139) @ 8ns system clock period 
+													                     is 893 KHz, < SCK max frequency of 0.9 MHz (datasheet) */
 				begin 
 					SCK_counter <= SCK_counter + 1;
-				end 
-			else if (r_SCK_enable == 1 && r_STATE !== INITIALIZE)
-				begin 
-					SCK_counter <= 0;
 				end 
 			else 
 				begin 
 					SCK_counter <= 0;
 				end 
 		end                                                             	
-	assign SCK = (SCK_counter <= 69) ? 1:0;      // 50% duty cycle PWM/SPI clock   
+	assign SCK = (SCK_counter <= 69) ? 0:1;      // 50% duty cycle PWM/SPI clock   
 		
 	// State machine	
 	always @ (posedge clk)
@@ -127,7 +123,7 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 						r_SCK_enable <= 0;
 						r_MOSI <= START;
 						r_DV <= 0;
-							if (sample_counter == 120)     
+							if (sample_counter >= 119)     
 								begin 
 									r_SCK_enable <= 1;   // pull SCK high after 56 counts @ 8ns (448ns, check tsucs in datasheet, tsucs >= 100ns)
 								end 
@@ -251,4 +247,5 @@ module SPI_state_machine #(parameter // set up bits for MOSI (DIN on datasheet)
 	assign DATA_VALID = r_DV; 
 		
 endmodule 		
+				
 			
