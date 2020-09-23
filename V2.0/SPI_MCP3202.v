@@ -5,6 +5,9 @@
 //   PROJECT DESCRIPTION:	A SPI master for a MCP3202 12-bit ADC. The sampling frequency
 // 							is 50 KHz, making the Nyquist frequency 25 KHz. When the
 //                          output 12-bit word is valid, the data valid flag goes high.
+//                          The module can be configured to support single-ended and 
+//							differential sampling modes, as well as specificy aquisition 
+//                          channel on the ADC (see pinout in datasheet for details)
 //
 //	            FILENAME:   SPI_MCP3202.v
 //	             VERSION:   2.0  9/17/2020
@@ -16,10 +19,8 @@
 `timescale 1ns / 1ns
 
 module SPI_MCP3202 #(parameter // set up bits for MOSI (DIN on datasheet) 
-	START = 1,      // start bit
 	SGL = 1,        // sets ADC to single ended mode
-	ODD = 0,        // sets sample input to channel 0
-	MSBF = 1        // sets ADC to transmit MSB first
+	ODD = 0         // sets sample input to channel 0
 	)(
 	input clk,                 // 125  MHz 
 	input MISO,                // data out of ADC (Dout pin)
@@ -29,6 +30,10 @@ module SPI_MCP3202 #(parameter // set up bits for MOSI (DIN on datasheet)
 	output CS,                 // Chip Select
 	output DATA_VALID          // is high when there is a full 12 bit word. 
 	);
+	
+	// additional MOSI data
+	localparam START = 1;           // start bit
+	localparam	MSBF = 1;           // sets ADC to transmit MSB first
 	
 	// states
 	localparam INITIALIZE = 0;      // initialize the state machine
@@ -195,6 +200,6 @@ module SPI_MCP3202 #(parameter // set up bits for MOSI (DIN on datasheet)
 	assign DATA_VALID = r_DV; 
 		
 endmodule 		
-				
+						
 				
 			
