@@ -8,7 +8,9 @@ This is a custom serial peripheral interface for a 12 bit ADC (MCP3202)
 
 Please watch my youtube video on version 1 for more clarification: https://www.youtube.com/watch?v=upVfMuauNak&t=406s
 
-In Version 2.0 I updated the sampling frequency to its max 50 KHz (in reality 49.84 KHz), and changed some timing
+In Version 2.0 I updated the sampling frequency to its max 50 KHz, and changed some timing
 on the data valid signal, as well as some of the parameters. 
+
+I also included the zip file in /V2.0 that contains the module in an IP core than can be added to a block design in Vivado
 
 :) happy interfacing!
