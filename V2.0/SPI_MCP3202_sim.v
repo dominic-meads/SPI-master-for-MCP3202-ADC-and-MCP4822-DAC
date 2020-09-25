@@ -1,3 +1,5 @@
+
+
 `timescale 1ns / 1ns
 
 module tb;
@@ -10,7 +12,7 @@ module tb;
   // MISO word to transmit 1st = 12'b110101110011 or 12'hD73
   // MISO word to transmit 2nd = 12'b000000000011 or 12'h3
   
-  SPI_state_machine #(1,0) uut (clk,MISO,MOSI,SCK,o_DATA,CS,DATA_VALID);
+  SPI_MCP3202 #(1,0) uut (clk,MISO,MOSI,SCK,o_DATA,CS,DATA_VALID);
   
   initial 
     begin 
@@ -46,9 +48,9 @@ module tb;
       MISO=1;    // 1
       #1120
       MISO=1;	 // 0
-	  #1120
-	  MISO=1'bz;  // datasheet says the chip will be in a high impedance state when MISO is not active
-	  #5000
+      #1120
+      MISO=1'bz;  // datasheet says the chip will be in a high impedance state when MISO is not active
+      #5000
       $finish;
     end
 endmodule
