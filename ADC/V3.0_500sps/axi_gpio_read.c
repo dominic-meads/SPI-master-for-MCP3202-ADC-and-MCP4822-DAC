@@ -29,7 +29,7 @@ int main()
     if (dv_state != last_dv_state){
       if (dv_state == 1){
         rx_data = XGpio_DiscreteRead(&data,1);
-        PRINT TO FILE
+        printf("%d\n",rx_data);
       }
       /* else {
         print("new sample conversion taking place\n\r");
